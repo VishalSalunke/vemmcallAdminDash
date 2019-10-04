@@ -1,7 +1,7 @@
 import React , { Component } from 'react'
 import { BrowserRouter as Router , Link , Route } from 'react-router-dom'
 import  ManageWorkflow  from './ManageWorkflow'
-
+import axios from 'axios'
 
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -48,20 +48,18 @@ const useStyles = makeStyles(theme => ({
  			
  			this.state = {
 	
-			columns: [
+			workFlowListColumns: [
      					 { title: 'Name', field: 'name' },
-      						{ title: 'Discription', field: 'discription' },
+      					 { title: 'Discription', field: 'description' },
      											
     				],
 
-    		data: [
-     				 { name: 'Invalid number follow up flow', discription: ' This flow gets called  when the initial call failed because of invalid number'
-     				 },
-
-     				 { name: 'User not available',discription: 'User didint recieved call'},
-    			  ],
+    		workFlowListData: [ ],
     		CreateFlowDialoge : false,
-    		DisplayWorkflowHome : true	  		
+    		DisplayWorkflowHome : true,
+    		wokFlowName : '',
+    		WorkFlowDescription : ''
+
 			}	
  		}
 
@@ -84,9 +82,153 @@ const useStyles = makeStyles(theme => ({
  				})
  		} 
 
+ 		handleChange = ({ target }) => {
+ 				this.setState({
+      					[target.name]: target.value
+    			});
+ 		}
+
+
+
  		handleSubmit = () => {
  			console.log(" form submitted ")
  		}
+
+ 		fetchWorkFlowList = () => {
+ 				axios.get('http://localhost:3000/react_api/v1/admin/flows/flows',{
+ 				headers : {
+ 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
+ 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'uid' : 'vsalunke@quinstreet.com'
+
+ 				},
+ 				crossDomain: true
+ 			})
+  			.then(response => {
+   			 	console.log(response);
+   		    	response.data.flows.map( item => {
+   		    	 		this.setState({
+ 							workFlowListData : [ ...this.state.workFlowListData , item]
+ 						}) 
+   		    	})
+  			})
+  			.catch(error => {
+  			 			 console.log(error);
+  			}); 
+
+ 		}
+
+
+ 		componentDidMount() {
+
+  					this.fetchWorkFlowList()
+ 			
+  		}
+
+  	createWorkFlow = () => {
+  
+
+    		axios.post('http://localhost:3000/react_api/v1/admin/flows/create_flow',
+
+    		{
+    			crossDomain: true,
+ 				name: this.state.wokFlowName,
+				description: this.state.WorkFlowDescription
+    		},
+
+    		{
+ 				headers : {
+ 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
+ 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'uid' : 'vsalunke@quinstreet.com'
+ 				}
+ 			}	
+	
+ 			)
+  			.then(response => {
+   			 	console.log(response);
+   			 	this.setState({
+ 					CreateFlowDialoge : false
+ 				})
+   		    	
+  			})
+  			.catch(error => {
+  			 			 console.log(error);
+  			}); 
+
+
+
+  	}
+
+  	updateWorkFlow = (newData) => {
+  
+  		console.log(newData)
+  		let id = newData.id
+  		let NewName =  newData.name
+  		let NewDescription =  newData.description
+  		
+  		   axios.put(`http://localhost:3000/react_api/v1/admin/flows/${id}`,
+
+    		{
+    			crossDomain: true,
+ 				name: NewName,
+				description: NewDescription
+    		},
+
+    		{
+ 				headers : {
+ 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
+ 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'uid' : 'vsalunke@quinstreet.com'
+ 				}
+ 			}	
+	
+ 			)
+  			.then(response => {
+   			 	console.log(response);
+   		    	
+  			})
+  			.catch(error => {
+  			 			 console.log(error);
+  			}); 
+
+  	}
+
+  	deleteWorkFlow = (newData) => {
+  
+  		console.log(newData)
+  		let id = newData.id
+  		let NewName =  newData.name
+  		let NewDescription =  newData.description
+  		
+  		   axios.delete(`http://localhost:3000/react_api/v1/admin/flows/${id}`,
+
+    		{
+ 				headers : {
+ 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
+ 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'uid' : 'vsalunke@quinstreet.com'
+ 				}
+ 			},
+ 			
+    		{
+    			crossDomain: true,
+ 				name: NewName,
+				description: NewDescription
+    		}	
+	
+ 			)
+  			.then(response => {
+   			 	console.log(response);
+   		    	
+  			})
+  			.catch(error => {
+  			 			 console.log(error);
+  			}); 
+
+  	}
+
+
 
 	render(){
 		return(
@@ -128,26 +270,28 @@ const useStyles = makeStyles(theme => ({
         				<Grid item xs={10} className={useStyles.tableMargin}>
         						<MaterialTable
      								 title="Work flows"
-     								 columns={this.state.columns}
-      								 data={this.state.data}
+     								 columns={this.state.workFlowListColumns}
+      								 data={this.state.workFlowListData}
       							     editable={{
         										onRowAdd: newData =>
                                                 	new Promise(resolve => {
                                                			 setTimeout(() => {
                                                 			resolve();
-                                               				const data = [...this.state.data];
-                                               				data.push(newData);
-                                                			this.setState({ ...this.state, data });
+                                               				const workFlowListData = [...this.state.workFlowListData];
+                                               				workFlowListData.push(newData);
+                                                			this.setState({ ...this.state, workFlowListData });
             											 }, 600);
           											}),
 
        								 			onRowUpdate: (newData, oldData) =>
           											new Promise(resolve => {
+          												
             											setTimeout(() => {
               												resolve();
-              												const data = [...this.state.data];
-              												data[data.indexOf(oldData)] = newData;
-              												this.setState({ ...this.state, data });
+              												this.updateWorkFlow(newData)
+              												const workFlowListData = [...this.state.workFlowListData];
+              												workFlowListData[workFlowListData.indexOf(oldData)] = newData;
+              												this.setState({ ...this.state, workFlowListData });
             											}, 600);
           											}),
 
@@ -155,9 +299,10 @@ const useStyles = makeStyles(theme => ({
           											new Promise(resolve => {
            												 setTimeout(() => {
              												 resolve();
-              												 const data = [...this.state.data];
-              												 data.splice(data.indexOf(oldData), 1);
-              												 this.setState({ ...this.state, data });
+             												 this.deleteWorkFlow(oldData)
+              												 const workFlowListData = [...this.state.workFlowListData];
+              												 workFlowListData.splice(workFlowListData.indexOf(oldData), 1);
+              												 this.setState({ ...this.state, workFlowListData });
             											 }, 600);
           											}),
       										}}
@@ -189,17 +334,19 @@ const useStyles = makeStyles(theme => ({
  							onSubmit={this.handleSubmit}
  						>
           					<TextField
-        							id="wokFlow-name"
+        							name="wokFlowName"
         							label="Name"
         							className={useStyles.textField}
         							placeholder="Enter work flow name"
         							margin="normal"
         							variant="outlined"
+        							value={this.state.wokFlowName}
+        							onChange={ this.handleChange }
         							required
       						/>
       						<br/>
       						 <TextField
-        						id="WorkFlow-discription"
+        						name="WorkFlowDescription"
         						label="Discription"
         						multiline
         						rows="4"
@@ -207,6 +354,8 @@ const useStyles = makeStyles(theme => ({
         						className={useStyles.textField}
         						margin="normal"
         						variant="outlined"
+        						value={this.state.WorkFlowDescription}
+        						onChange={ this.handleChange }
         						required
      						 />
 
@@ -218,7 +367,7 @@ const useStyles = makeStyles(theme => ({
             						Cancel
           					</Button >
           					<Link to="/manage-work-flow">
-          					<Button type="submit" onClick={this.handleCreateFlow} color="primary">
+          					<Button type="submit" onClick={this.createWorkFlow} color="primary">
             					Create
          				    </Button>
          				    </Link>
