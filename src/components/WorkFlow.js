@@ -58,7 +58,8 @@ const useStyles = makeStyles(theme => ({
     		CreateFlowDialoge : false,
     		DisplayWorkflowHome : true,
     		wokFlowName : '',
-    		WorkFlowDescription : ''
+    		WorkFlowDescription : '',
+    		createFlowID : undefined
 
 			}	
  		}
@@ -94,7 +95,7 @@ const useStyles = makeStyles(theme => ({
  			console.log(" form submitted ")
  		}
 
- 		fetchWorkFlowList = () => {
+ 		fetchAllWorkFlow = () => {
  				axios.get('http://localhost:3000/react_api/v1/admin/flows/flows',{
  				headers : {
  					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
@@ -121,7 +122,7 @@ const useStyles = makeStyles(theme => ({
 
  		componentDidMount() {
 
-  					this.fetchWorkFlowList()
+  					this.fetchAllWorkFlow()
  			
   		}
 
@@ -148,8 +149,13 @@ const useStyles = makeStyles(theme => ({
   			.then(response => {
    			 	console.log(response);
    			 	this.setState({
- 					CreateFlowDialoge : false
+ 					CreateFlowDialoge : false,
+ 					createFlowID : response.data.flow.id,
+ 					workFlowListData : [ ...this.state.workFlowListData , response.data.flow],
+ 					DisplayWorkflowHome : false
  				})
+ 				//this.props.history.push(`/manage-work-flow/${this.state.createFlowID}`)
+
    		    	
   			})
   			.catch(error => {
@@ -234,7 +240,7 @@ const useStyles = makeStyles(theme => ({
 		return(
 			<>
 
-				<Router>
+				<Router >
 					{
 						this.state.DisplayWorkflowHome && 
 
@@ -249,11 +255,17 @@ const useStyles = makeStyles(theme => ({
 
         				</Grid>
         				<Grid item xs={2} >
-          						<Button color="primary" variant="contained" className={useStyles.button}
+          						
+        						<Link to='/manage-work-flow/'>
+        							<Button color="primary" variant="contained" className={useStyles.button}
           						 onClick={this.openCreateFlowDialog}	
           						>
        								 Create Work Flow
       						</Button>
+
+ 								</Link>
+
+          						
         				</Grid>
 
         				<Grid item xs={9}>
@@ -366,15 +378,17 @@ const useStyles = makeStyles(theme => ({
           					<Button onClick={this.handleDialogClose} color="primary">
             						Cancel
           					</Button >
-          					<Link to="/manage-work-flow">
-          					<Button type="submit" onClick={this.createWorkFlow} color="primary">
+
+
+          					
+          					<Button type="submit" color="primary" onClick={this.createWorkFlow} >
             					Create
          				    </Button>
-         				    </Link>
+         				   
      					</DialogActions>
      			 </Dialog>	
 
-     			 			<Route exact path='/manage-work-flow' component={ManageWorkflow} />
+     			 			<Route exact path='/manage-work-flow/' component={ManageWorkflow} />
 					
 
 				</Router>
