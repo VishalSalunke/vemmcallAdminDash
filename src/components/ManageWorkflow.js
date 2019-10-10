@@ -250,10 +250,11 @@ constructor(props) {
   			if(this.props.history.location.state.newFlowData){
   				let newFlowData =  this.props.history.location.state.newFlowData 
   				this.setState({
- 					flowName : newFlowData.name,
- 					flowID : newFlowData.id,
- 					flowDescription : newFlowData.description, 					
- 				})	
+ 									flowName : newFlowData.name,
+ 									flowID : newFlowData.id,
+ 									flowDescription : newFlowData.description, 					
+					 })
+					 	
   			}		
   	 	
   	 }
@@ -270,7 +271,7 @@ constructor(props) {
 						<h2>{this.state.flowName}</h2>
 					</Typography>	
 					<Typography  component="h3">
-						{this.state.flowDescription}
+						<h3>{this.state.flowDescription}</h3>
 					</Typography>	 
 				</div>
 				</Paper>
