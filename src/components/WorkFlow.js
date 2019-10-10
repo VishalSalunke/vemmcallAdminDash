@@ -56,7 +56,6 @@ const useStyles = makeStyles(theme => ({
 
     		workFlowListData: [ ],
     		CreateFlowDialoge : false,
-    		DisplayWorkflowHome : true,
     		wokFlowName : '',
     		WorkFlowDescription : '',
     		createFlowID : undefined
@@ -152,9 +151,10 @@ const useStyles = makeStyles(theme => ({
  					CreateFlowDialoge : false,
  					createFlowID : response.data.flow.id,
  					workFlowListData : [ ...this.state.workFlowListData , response.data.flow],
- 					DisplayWorkflowHome : false
+ 					newlyCreatedFlow : response.data.flow
  				})
  				//this.props.history.push(`/manage-work-flow/${this.state.createFlowID}`)
+ 				this.props.history.push(`/work-flows/${response.data.flow.id}`,{ newFlowData :   response.data.flow});
 
    		    	
   			})
@@ -241,40 +241,26 @@ const useStyles = makeStyles(theme => ({
 			<>
 
 				<Router >
-					{
-						this.state.DisplayWorkflowHome && 
-
-						<div className={useStyles.root}>
+				 <div className={useStyles.root}>
 				 	<Grid container spacing={3}>
 
 				 		<Grid item xs={12}>
           					<h1> work flow</h1>
         				</Grid>
 
-        				<Grid item xs={1}>
+        				<Grid item xs={8}>
 
         				</Grid>
-        				<Grid item xs={2} >
-          						
-        						<Link to='/manage-work-flow/'>
-        							<Button color="primary" variant="contained" className={useStyles.button}
-          						 onClick={this.openCreateFlowDialog}	
+        				
+        				<Grid item xs={4} >
+        						<Button color="primary" variant="contained" className={useStyles.button}
+          									 onClick={this.openCreateFlowDialog}	
           						>
        								 Create Work Flow
       						</Button>
-
- 								</Link>
-
           						
         				</Grid>
-
-        				<Grid item xs={9}>
-
-        				</Grid>
-
-        				
-
-
+						
         				<Grid item xs={1}>
 
         				</Grid>
@@ -284,16 +270,19 @@ const useStyles = makeStyles(theme => ({
      								 title="Work flows"
      								 columns={this.state.workFlowListColumns}
       								 data={this.state.workFlowListData}
+      								  actions={[
+          										{
+           										 icon: 'link',
+           										 tooltip: 'Go to flow',
+          										 onClick: (event, rowData) => this.props.history.push(`/work-flows/${rowData.id}`,{ newFlowData : rowData})
+          										}
+        									  ]}
+									options={{
+												  actionsColumnIndex: -1,
+												  addRow: false
+        									}}	        									  
       							     editable={{
-        										onRowAdd: newData =>
-                                                	new Promise(resolve => {
-                                               			 setTimeout(() => {
-                                                			resolve();
-                                               				const workFlowListData = [...this.state.workFlowListData];
-                                               				workFlowListData.push(newData);
-                                                			this.setState({ ...this.state, workFlowListData });
-            											 }, 600);
-          											}),
+        										onAdd: 'never',
 
        								 			onRowUpdate: (newData, oldData) =>
           											new Promise(resolve => {
@@ -332,7 +321,6 @@ const useStyles = makeStyles(theme => ({
 				 </div>
 
 
-					}
 				 
 
 				 <Dialog open={this.state.CreateFlowDialoge} onClose={this.handleDialogClose} aria-labelledby="form-dialog-title">
@@ -384,13 +372,12 @@ const useStyles = makeStyles(theme => ({
           					<Button type="submit" color="primary" onClick={this.createWorkFlow} >
             					Create
          				    </Button>
+         				    	
          				   
      					</DialogActions>
      			 </Dialog>	
 
-     			 			<Route exact path='/manage-work-flow/' component={ManageWorkflow} />
 					
-
 				</Router>
 
    				 
