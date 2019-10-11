@@ -1,6 +1,6 @@
 import React , { Component } from 'react'
-import { BrowserRouter as Router , Link , Route } from 'react-router-dom'
-import  ManageWorkflow  from './ManageWorkflow'
+import { BrowserRouter as Router } from 'react-router-dom'
+
 import axios from 'axios'
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -106,7 +106,7 @@ const useStyles = makeStyles(theme => ({
  			})
   			.then(response => {
    			 	console.log(response);
-   		    	response.data.flows.map( item => {
+   		    	response.data.flows.forEach( item => {
    		    	 		this.setState({
  							workFlowListData : [ ...this.state.workFlowListData , item]
  						}) 
@@ -160,10 +160,7 @@ const useStyles = makeStyles(theme => ({
   			})
   			.catch(error => {
   			 			 console.log(error);
-  			}); 
-
-
-
+			  }); 
   	}
 
   	updateWorkFlow = (newData) => {

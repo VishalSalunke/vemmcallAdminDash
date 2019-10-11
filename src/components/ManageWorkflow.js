@@ -4,8 +4,6 @@ import MaterialTable from 'material-table';
 import axios from 'axios'
 
 import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
-
 import { Button , Grid} from '@material-ui/core';
 
 
@@ -31,9 +29,7 @@ import { Table , TableBody , TableCell , TableHead  , TableRow ,
 	   }   from '@material-ui/core'
 
 const useStyles = makeStyles(theme => ({
-  root: {
-    width: '100%',
-  },
+  
   paper: {
     marginTop: theme.spacing(3),
     width: '100%',
@@ -81,23 +77,21 @@ const getStages = () => {
 					  id:502, flowID : 1 , name : 'Send whatsapp msg' , description: 'enggage user on whatsapp' , 
 					  class_name : 'sendWhatsappJob' , order : 2 , template : ' welcome to xyz insurance company',
 					  exit_actions : [{ status : 'invalid user', go_to_flow : 'invalid user flow' }]
-				    }
+						},
+						{ 
+							id:503, flowID : 1 , name : 'call user' , description: 'enggage user on whatsapp' , 
+							class_name : 'sendWhatsappJob' , order : 3 , template : ' welcome to xyz insurance company',
+							exit_actions : [{ status : 'invalid user', go_to_flow : 'invalid user flow' }]
+						},
+						{ 
+							id:504, flowID : 1 , name : 'wait job' , description: 'enggage user on whatsapp' , 
+							class_name : 'sendWhatsappJob' , order : 4 , template : ' welcome to xyz insurance company',
+							exit_actions : [{ status : 'invalid user', go_to_flow : 'invalid user flow' }]
+						}	
 	]
 
 	return Stages
 }
-
-
-
-
-// fake data generator
-const getItems = count =>
-  Array.from({ length: count }, (v, k) => k).map(k => ({
-    id: `Stage-${k}`,
-    primary: `Stage- ${k}`,
-    secondary: k % 2 === 0 ? `whatsapp ${k}` : undefined
-  }));
-
 // a little function to help us with reordering the result
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
@@ -127,7 +121,8 @@ export default class ManageWorkflow extends Component {
 constructor(props) {
     super(props);
     this.state = {
-      items: getStages(),
+			items: getStages(),
+			stages: [],
       createStateDialog : false,
       exitActionColumns : [
           { title : 'Status' , field: 'exitActionStatus' },
@@ -166,19 +161,24 @@ constructor(props) {
 
  	
     onDragEnd(result) {
-      // dropped outside the list
+			// dropped outside the list
+			debugger
       if (!result.destination) {
       return;
       }
 
-      const items = reorder(
-        this.state.items,
+      const newStagesOrder = reorder(
+        this.state.stages,
         result.source.index,
         result.destination.index
       );
 
+			newStagesOrder.forEach((item,index)=>{
+					item.order = index + 1
+			})
+			//calll update stage order here
     	this.setState({
-      	items
+      	stages : newStagesOrder
       });
   	}
 
@@ -214,25 +214,62 @@ constructor(props) {
   	 		axios.post('http://localhost:3000/react_api/v1/admin/stages/create_stage',
 
     		{	
-    			flow_id: this.state.flowID,
-				name: this.state.currentStage.name,
-				description: this.state.currentStage.description,
-				class_name: this.state.currentStage.type,
-				params:{ },
-				order: 1
-
-
+    			flow_id: this.state.flowID.toString(),
+					name: this.state.currentStage.name,
+					description: this.state.currentStage.description,
+					class_name: this.state.currentStage.type,
+					params:{ }.toString(),
+					order: (this.state.stages.length + 1).toString()
     		},{
     			headers : {
  					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
  					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
  					'uid' : 'vsalunke@quinstreet.com'
  				}
+				})
+				.then(response => {
+					console.log(response);
+					this.setState({
+						stages : [...this.state.stages,response.data.stage]
+					})
+				 		 
+			})
+			.catch(error => {
+							console.log(error);
+			}); 
 
+		 }
+		 fetchWorkFlowInfo = (flowId) => {
+  		
+  		   axios.get(`http://localhost:3000/react_api/v1/admin/flows/${flowId}`,
+    		{
+ 				headers : {
+ 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
+ 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'uid' : 'vsalunke@quinstreet.com'
+ 				}
+ 			}	
+	
+ 			)
+  			.then(response => {
+						console.log(response);
+						this.setState({
+							flowName : response.data.message.name,
+							flowID : response.data.message.id,
+							flowDescription : response.data.message.description, 								
+			})	
+			response.data.message.stages.forEach( stage =>{
+				this.setState({
+					stages : [...this.state.stages,stage]
+				})
+			})
+   		    	
+  			})
+  			.catch(error => {
+  			 			 console.log(error);
+  			}); 
 
-    		})
-
-  	 }
+  	}
 
   	 handleInputChange = ({ target }) => {
  				let currentStage = {...this.state.currentStage}
@@ -246,17 +283,15 @@ constructor(props) {
 
 
   	 componentDidMount(){
- 
-  			if(this.props.history.location.state.newFlowData){
-  				let newFlowData =  this.props.history.location.state.newFlowData 
-  				this.setState({
- 									flowName : newFlowData.name,
- 									flowID : newFlowData.id,
- 									flowDescription : newFlowData.description, 					
-					 })
-					 	
-  			}		
-  	 	
+				let flowId = this.props.history.location.pathname.match('([^/]+$)')[0]
+				
+
+				if(this.props.history.location.state){
+					let newFlowData =  this.props.history.location.state.newFlowData 
+					this.fetchWorkFlowInfo(newFlowData.id)
+				}else if(flowId){
+					this.fetchWorkFlowInfo(flowId)
+				}
   	 }
   	
 	render(){
@@ -267,16 +302,16 @@ constructor(props) {
 				<h1> Manage work flow </h1>
 				<Paper className={useStyles.root}>
 				<div style={{textAlign:"left" , margin:10}}>
-					<Typography  component="h2">
+					
 						<h2>{this.state.flowName}</h2>
-					</Typography>	
-					<Typography  component="h3">
+					
 						<h3>{this.state.flowDescription}</h3>
-					</Typography>	 
+					 
 				</div>
 				</Paper>
-				
-				<Grid container spacing={3}>
+
+				<Paper className={useStyles.root}>
+					<Grid container spacing={3}>
 
 					<Grid item xs>
 						<h3 style={{textAlign:"left" , margin:10}}> Stages </h3>
@@ -289,6 +324,7 @@ constructor(props) {
 
 
 				</Grid>
+				
 
 
 
@@ -303,10 +339,10 @@ constructor(props) {
           		{(provided, snapshot) => (
             		<RootRef rootRef={provided.innerRef}>
             		 	<List style={getListStyle(snapshot.isDraggingOver)} >
-                			{this.state.items.map((item, index) => (
-                  					<Draggable key={item.order} draggableId={item.order} index={index}>
+                			{this.state.stages.map((item, index) => (
+                  					<Draggable key={item.id} draggableId={item.id} index={index}>
                     						{(provided, snapshot) => (
-                   									<div className={useStyles.stageList}> 	
+                   									<div > 	
                       									<ListItem
                         									ContainerComponent="li"
                         									ContainerProps={{ ref: provided.innerRef }}
@@ -316,7 +352,8 @@ constructor(props) {
                           											snapshot.isDragging,
                           											provided.draggableProps.style,
                           											useStyles.stageList
-                        										)}
+																						)}
+																						
                       									>
                         									<ListItemIcon>
                           											<EmailIcon />
@@ -328,7 +365,7 @@ constructor(props) {
                         									/>
 
                         									<ListItemSecondaryAction>
-                          											<IconButton>
+                          											<IconButton onClick={alert("hello")}>
                             											<EditIcon  edge="start"/>
                           											</IconButton>
                         									</ListItemSecondaryAction>
@@ -347,7 +384,9 @@ constructor(props) {
 
 
 			</Grid>	
+			</Paper>	
 
+			<Paper className={useStyles.root}>																			
 			<Grid item xs={12}>
 				<h3 style={{textAlign:"left" , margin:10}}> Consumer requests </h3>
 			</Grid>
@@ -389,7 +428,7 @@ constructor(props) {
 			<Grid item xs={2}>
 
 			</Grid>	
-
+		</Paper>										
 
 			<Dialog open={this.state.createStateDialog} onClose={this.handleDialogClose} aria-labelledby="form-dialog-title">
         			 <DialogTitle id="form-dialog-title">Add new stage </DialogTitle>
