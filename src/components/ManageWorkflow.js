@@ -2,11 +2,12 @@ import React , { Component } from 'react'
 import Select from '@material-ui/core/Select';
 import MaterialTable from 'material-table';
 import axios from 'axios'
+import SimpleReactValidator from 'simple-react-validator';
 
 import Paper from '@material-ui/core/Paper';
-import { Button , Grid} from '@material-ui/core';
-
-
+import { Button , Grid , Link , Typography} from '@material-ui/core';
+import Breadcrumbs from '@material-ui/core/Breadcrumbs';
+import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import {
   List,
   ListItem,
@@ -17,15 +18,15 @@ import {
 } from "@material-ui/core";
 import RootRef from "@material-ui/core/RootRef";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import EmailIcon from "@material-ui/icons/Inbox";
 import EditIcon from "@material-ui/icons/Edit";
+import TuneIcon from "@material-ui/icons/Tune";
+// import DeleteIcon from '@material-ui/icons/Delete';
 
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { Table , TableBody , TableCell , TableHead  , TableRow ,
-		Dialog , DialogTitle , DialogContent , DialogContentText , DialogActions , TextField ,
-		InputLabel , FormControl 
+import { Dialog , DialogTitle , DialogContent  , DialogActions , TextField ,
+		InputLabel , FormControl , MenuItem , FormHelperText
 	   }   from '@material-ui/core'
 
 const useStyles = makeStyles(theme => ({
@@ -62,36 +63,15 @@ const useStyles = makeStyles(theme => ({
 	},
 	root: {
     padding: theme.spacing(3, 2),
-  }
+	},
+	closeButton: {
+    position: 'absolute',
+    right: theme.spacing(1),
+    top: theme.spacing(1),
+    color: theme.palette.grey[500],
+  },
 }));
 
-
-const getStages = () => {
-	let Stages = [
-					{ 
-					  id:501, flowID : 1 , name : 'Send hello email' , description: 'very first email' , 
-					  class_name : 'sendSmsJob' , order : 1 , template : ' Thank you for your enquiry',
-					  exit_actions : [{ status : 'invalid email', go_to_flow : 'invalid lead flow' }]
-				    },
-				    { 
-					  id:502, flowID : 1 , name : 'Send whatsapp msg' , description: 'enggage user on whatsapp' , 
-					  class_name : 'sendWhatsappJob' , order : 2 , template : ' welcome to xyz insurance company',
-					  exit_actions : [{ status : 'invalid user', go_to_flow : 'invalid user flow' }]
-						},
-						{ 
-							id:503, flowID : 1 , name : 'call user' , description: 'enggage user on whatsapp' , 
-							class_name : 'sendWhatsappJob' , order : 3 , template : ' welcome to xyz insurance company',
-							exit_actions : [{ status : 'invalid user', go_to_flow : 'invalid user flow' }]
-						},
-						{ 
-							id:504, flowID : 1 , name : 'wait job' , description: 'enggage user on whatsapp' , 
-							class_name : 'sendWhatsappJob' , order : 4 , template : ' welcome to xyz insurance company',
-							exit_actions : [{ status : 'invalid user', go_to_flow : 'invalid user flow' }]
-						}	
-	]
-
-	return Stages
-}
 // a little function to help us with reordering the result
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
@@ -102,7 +82,11 @@ const reorder = (list, startIndex, endIndex) => {
 };
 
 const getItemStyle = (isDragging, draggableStyle) => ({
-  // styles we need to apply on draggables
+	// styles we need to apply on draggables
+	borderStyle: 'outset',
+	padding: 5,
+	marginTop: 5,
+	marginLeft: 10,
   ...draggableStyle,
 
   ...(isDragging && {
@@ -115,54 +99,50 @@ const getListStyle = isDraggingOver => ({
 });
 
 
-
 export default class ManageWorkflow extends Component {
 
 constructor(props) {
-    super(props);
+		super(props);
+		this.validator = new SimpleReactValidator();
     this.state = {
-			items: getStages(),
+			
 			stages: [],
       createStateDialog : false,
-      exitActionColumns : [
-          { title : 'Status' , field: 'exitActionStatus' },
-          { title : 'Go to flow' , field: 'goToFlow' }
-
-        ],
-        exitActions : [
-          { exitActionStatus : 'Invalid email' , goToFlow: 'Invalid lead flow'},
-          { exitActionStatus : 'Mail box full' , goToFlow: 'Try later flow ' }
-
-        ],
+      exitActionColumns : [],
+			workFlowListData : [],	
+			consumerRequestColumns : [
+					{ title : 'Date time' , field: 'result' },
+					{ title : 'Name' , field: 'action_type' },
+					{ title : 'Details' , field:'action_flow'},
+					{ title : 'Funnel' , field:'action_flow'} 
+			]	,
+				exitActions : [ ],		
+				exitActionActionFlowColumnDisable : 'always',	
+				editStageDisableTemplate : false, 
         currentStage : {
-        			id : undefined,
-        			name : '',
-        			description : '',
-        			type : '',
-        			template : ''
-        }	
+						id : undefined,
+						name : '',
+						description : '',
+						type : '',
+						template : '',
+						exit_actions : [],
+						action_type: ''
+				},
+				jobTypes : {
+					SendSmsJob : 'Send SMS',
+					SendEmailJob : 'Send Email',
+					SendWhatsappTemplateJob : 'Send whatsapp template',
+					WaitJob : 'Wait job'
+				},
+				editStageBoxTitle : '' 	
 
     };
     this.onDragEnd = this.onDragEnd.bind(this);
-  }
-
-  createData = (dateTime, name, details, funnel) => {
- 	 return { dateTime, name, details, funnel };	
- }
-
-  rows = [
-  this.createData('10/11/2019', 'Simon B', 'Ford 500', 'Lost'),
-  this.createData('19/08/2019', 'Lucas M', 'Audi A5', 'Proposal'),
-  this.createData('11/10/2019', 'Danniel P', 'BMW 5', 'Lost'),
-  this.createData('18/11/2019', 'Abhijjt N', 'Honda jazz', 'Proposal'),
-  this.createData('12/07/2019', 'Vishal s', 'Jeep sports', 'Lost'),
-	];
-
-
- 	
+	}
+	
     onDragEnd(result) {
 			// dropped outside the list
-			debugger
+			
       if (!result.destination) {
       return;
       }
@@ -171,26 +151,114 @@ constructor(props) {
         this.state.stages,
         result.source.index,
         result.destination.index
-      );
+			);
+			
+			// this.state.stages.forEach((item,index)=>{
 
+			// })
+			let stage_order_hash = {}	
 			newStagesOrder.forEach((item,index)=>{
-					item.order = index + 1
+					item.order = ((index + 1)*10)
+					stage_order_hash[item.id] = item.order
+
 			})
+
+			this.updateStageOrders(stage_order_hash);
+			console.log("*************** after drag   *******************")
+			console.log(stage_order_hash)
 			//calll update stage order here
     	this.setState({
       	stages : newStagesOrder
       });
-  	}
+		}
+		updateStageOrders = async (stage_order_hash) =>{
+			let id = this.state.currentStage.id;
+			
+			let res = await axios.put(`http://localhost:3000/react_api/v1/admin/stages/update_order`,
+    												{
+																crossDomain: true,
+																stage_order_hash
+    												},
+    												{
+ 																headers : {
+ 																				'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 																				'client' : '6fEfnZkXV5ewZzycrVyRJg',
+ 																				'uid' : 'vsalunke@quinstreet.com'
+ 																			}
+ 														}	
+											 )
+
+			let { data }  = res
+  		console.log(data)
+		}
+
+		prepareActionColumns = () => {
+				let exitColumns = [
+          				{ title : 'Action Result' , field: 'result' },
+									{ title : 'Action Type',field : 'action_type',
+									editComponent: props => (
+																	
+										<select
+											value={props.value}
+											onChange={e => {
+																	props.onChange(e.target.value)
+																	e.target.value!== 'go_to_flow' ? this.state.exitActionActionFlowColumnDisable = 'never' : this.state.exitActionActionFlowColumnDisable = 'always'
+																	//alert("hi")
+															 }
+											}								
+										> 
+										    <option> none </option>
+										    <option value={'go_to_flow'}>Go to flow</option>
+						 				    <option value={'success_exit'}>Success exit</option>
+										    <option value={'failed_exit'}>Failed exit</option>
+										</select>
+									
+									),
+										lookup: { go_to_flow: 'Go to flow', success_exit: 'Success exit',failed_exit:'Failed exit' },
+									},					
+									{ title : 'Action Flow',field : 'action_flow',
+									editable : this.state.exitActionActionFlowColumnDisable ,
+
+													lookup: (() => {
+																			let workFlows = this.listWorkflows()
+																			let options = {}
+																			workFlows.forEach((item)=>{
+																				options[item.name] = item.name
+																			})
+																		return options
+																})(),
+									} 
+				]
+				this.setState({
+					exitActionColumns : exitColumns
+				});
+		}
+		
+		listWorkflows = ()=>{
+				return	this.state.workFlowListData
+		}
 
     handleDialogClose = () => {
  				this.setState({
  					createStateDialog : false
  				})
- 		}
+		}
+		
+		makeCurrentStageEmplty = () => {
+			let currentStage = {}
+			
+			this.setState({
+						currentStage
+			})
+		}
+
 
     openCreateFlowDialog = () => {
+				this.makeCurrentStageEmplty()
+				this.prepareActionColumns()
  				this.setState({
- 					createStateDialog : true
+					 createStateDialog : true,
+					 editStageBoxTitle : 'Add new stage'
  				})
  		}	
 
@@ -206,70 +274,212 @@ constructor(props) {
     					 });
   	 };
 
-  	 saveStage = () => {
-  	 		this.setState({
- 					createStateDialog : false
- 				})
+		createStageAPI = () =>{
+				 
+			axios.post('http://localhost:3000/react_api/v1/admin/stages/create_stage',
 
-  	 		axios.post('http://localhost:3000/react_api/v1/admin/stages/create_stage',
-
-    		{	
-    			flow_id: this.state.flowID.toString(),
-					name: this.state.currentStage.name,
-					description: this.state.currentStage.description,
-					class_name: this.state.currentStage.type,
-					params:{ }.toString(),
-					order: (this.state.stages.length + 1).toString()
-    		},{
-    			headers : {
- 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
- 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
- 					'uid' : 'vsalunke@quinstreet.com'
- 				}
-				})
-				.then(response => {
-					console.log(response);
-					this.setState({
-						stages : [...this.state.stages,response.data.stage]
-					})
-				 		 
+			{	
+				flow_id: this.state.flowID.toString(),
+				name: this.state.currentStage.name,
+				description: this.state.currentStage.description,
+				class_name: this.state.currentStage.type,
+				params:{ }.toString(),
+				order: ((this.state.stages.length + 1)*10).toString()
+			},{
+				headers : {
+				 'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+				 'client' : '6fEfnZkXV5ewZzycrVyRJg',
+				 'uid' : 'vsalunke@quinstreet.com'
+			 }
 			})
-			.catch(error => {
-							console.log(error);
-			}); 
+			.then(response => {
+				console.log(response);
+				this.setState({
+					stages : [...this.state.stages,response.data.stage]
+				})
+						
+		})
+		.catch(error => {
+						console.log(error);
+		});
+		} 
 
-		 }
+		updateStageAPI = async () =>{
+			let id = this.state.currentStage.id;
+			
+			let res = await axios.put(`http://localhost:3000/react_api/v1/admin/stages/${id}`,
+    												{
+																crossDomain: true,
+ 																name: this.state.currentStage.name,
+																description: this.state.currentStage.description,
+																class_name: this.state.currentStage.type,
+																params : "{}"
+    												},
+    												{
+ 																headers : {
+ 																				'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 																				'client' : '6fEfnZkXV5ewZzycrVyRJg',
+ 																				'uid' : 'vsalunke@quinstreet.com'
+ 																			}
+ 														}	
+											 )
+
+			let { data }  = res
+  		console.log(data)			
+		}
+
+
+		  saveStage = () => {
+
+				if (!this.validator.allValid()) {
+					
+					this.validator.showMessages();
+					this.forceUpdate();
+					return
+				}
+  	 				this.setState({
+ 								createStateDialog : false
+ 						});
+				 
+				 if(this.state.currentStage.id){
+					 console.log("update stage");
+					  this.updateStageAPI();
+				 }else{
+					 console.log("create stage")
+					 this.createStageAPI();
+				 }
+				 
+				 this.setState({
+					stages : []
+				 })
+				this.fetchWorkFlowInfo(this.state.flowID);				 
+		  }
+
 		 fetchWorkFlowInfo = (flowId) => {
-  		
+  	
   		   axios.get(`http://localhost:3000/react_api/v1/admin/flows/${flowId}`,
     		{
  				headers : {
- 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
- 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
  					'uid' : 'vsalunke@quinstreet.com'
  				}
  			}	
 	
  			)
   			.then(response => {
+				
 						console.log(response);
 						this.setState({
 							flowName : response.data.message.name,
 							flowID : response.data.message.id,
 							flowDescription : response.data.message.description, 								
-			})	
-			response.data.message.stages.forEach( stage =>{
-				this.setState({
-					stages : [...this.state.stages,stage]
-				})
-			})
+						});	
+						response.data.message.stages.forEach( stage =>{
+									this.setState({
+											stages : [...this.state.stages,stage]
+									});
+							});
    		    	
   			})
   			.catch(error => {
   			 			 console.log(error);
   			}); 
 
-  	}
+		}
+		updateExitaction = (newData) =>{
+			
+			let id = newData.id
+			axios.put(`http://localhost:3000/react_api/v1/admin/exit_actions/${id}`,
+
+			{
+			
+				 result: newData.result,
+				 action_type: newData.action_type,
+				 action_flow: newData.action_flow
+			
+			},
+
+			{
+			 headers : {
+				 'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+				 'client' : '6fEfnZkXV5ewZzycrVyRJg',
+				 'uid' : 'vsalunke@quinstreet.com'
+			 }
+		 }	
+
+		 )
+			.then(response => {
+					console.log(response);
+					  		    	
+			})
+			.catch(error => {
+							console.log(error);
+			});
+
+		}
+
+		deleteExitAction = (newData) =>{
+			let id = newData.id
+			axios.delete(`http://localhost:3000/react_api/v1/admin/exit_actions/${id}`,
+			{
+			 headers : {
+				 'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+				 'client' : '6fEfnZkXV5ewZzycrVyRJg',
+				 'uid' : 'vsalunke@quinstreet.com'
+			 }
+		 }	
+
+		 )
+			.then(response => {
+					console.log(response);
+					  		    	
+			})
+			.catch(error => {
+							console.log(error);
+			});
+
+		}
+
+		addExitAction = (stage,newData) =>{
+			console.log("****************************************")
+			console.log(stage)
+			console.log(newData)
+
+			axios.post('http://localhost:3000/react_api/v1/admin/exit_actions/create_exit_action',
+
+    		{
+						stage_id: stage.id,
+						result: newData.result,
+						action_type: newData.action_type,
+						action_flow: newData.action_flow
+    		},
+
+    		{
+ 				headers : {
+ 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
+ 					'uid' : 'vsalunke@quinstreet.com'
+ 				}
+ 			}	
+	
+ 			)
+  			.then(response => {
+   			 	console.log(response);
+   		    	
+  			})
+  			.catch(error => {
+  			 			 console.log(error);
+			  }); 
+
+
+
+
+		} 
+
+		disableEnableTemplateField = () =>{
+
+		}	
 
   	 handleInputChange = ({ target }) => {
  				let currentStage = {...this.state.currentStage}
@@ -278,20 +488,96 @@ constructor(props) {
  					currentStage[target.name] = target.value
  				this.setState({
       					currentStage
-    			});
- 		}
+					});
+					if(target.name === 'type'){						
+						let editStageDisableTemplate
+						target.value === "WaitJob" ? editStageDisableTemplate=true : editStageDisableTemplate=false
+						this.setState({
+							editStageDisableTemplate
+						});
+					}
+					
+		 }
+		 
+		 openUpdateStage = (stage) =>{
+			this.prepareActionColumns()
+			let id = stage.id
+			axios.get(`http://localhost:3000/react_api/v1/admin/stages/${id}`,{
+ 				headers : {
+ 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
+ 					'uid' : 'vsalunke@quinstreet.com'
+
+ 				}
+ 			})
+  			.then(response => {
+   			 	console.log(response);
+					 let stageDetails = response.data.message
+					 let currentStage = {}
+
+					 currentStage["id"] = stageDetails.id
+					 currentStage["name"] = stageDetails.name
+					 currentStage["description"] = stageDetails.description
+					 currentStage["type"] = stageDetails.class_name
+					 currentStage["template"] = stageDetails.template
+					 currentStage["exit_actions"] = stageDetails.exit_actions
+					 
+					 this.setState({
+							currentStage
+					 }
+					 )
+					 this.setState({
+							createStateDialog : true,
+							exitActions : stageDetails.exit_actions,
+							editStageBoxTitle : 'Update this stage'
+					 })
+					 	
+  			})
+  			.catch(error => {
+  			 			 console.log(error);
+				}); 
+				
+
+
+				
+		 }	
+
+		 fetchAllWorkFlow = () => {
+			axios.get('http://localhost:3000/react_api/v1/admin/flows/flows',{
+			headers : {
+				'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+				'client' : '6fEfnZkXV5ewZzycrVyRJg',
+				'uid' : 'vsalunke@quinstreet.com'
+
+			},
+			crossDomain: true
+		})
+		 .then(response => {
+				 console.log(response);
+					response.data.flows.forEach( item => {
+							 this.setState({
+						workFlowListData : [ ...this.state.workFlowListData , item]
+					}) 
+					})
+		 })
+		 .catch(error => {
+						 console.log(error);
+		 }); 
+
+	}
 
 
   	 componentDidMount(){
 				let flowId = this.props.history.location.pathname.match('([^/]+$)')[0]
 				
-
+			
 				if(this.props.history.location.state){
 					let newFlowData =  this.props.history.location.state.newFlowData 
 					this.fetchWorkFlowInfo(newFlowData.id)
 				}else if(flowId){
 					this.fetchWorkFlowInfo(flowId)
 				}
+				this.fetchAllWorkFlow()
   	 }
   	
 	render(){
@@ -299,11 +585,19 @@ constructor(props) {
 		return(
 			<>
 
-				<h1> Manage work flow </h1>
+				<h1> {this.state.flowName} </h1>
 				<Paper className={useStyles.root}>
 				<div style={{textAlign:"left" , margin:10}}>
-					
-						<h2>{this.state.flowName}</h2>
+				<Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb">
+          <Link color="inherit" href="/">
+							Dashboard
+          </Link>
+          <Link color="inherit" href="/work-flows" >
+            Workflows
+          </Link>
+          <Typography color="textPrimary">{this.state.flowName}</Typography>
+        </Breadcrumbs>
+						
 					
 						<h3>{this.state.flowDescription}</h3>
 					 
@@ -313,8 +607,8 @@ constructor(props) {
 				<Paper className={useStyles.root}>
 					<Grid container spacing={3}>
 
-					<Grid item xs>
-						<h3 style={{textAlign:"left" , margin:10}}> Stages </h3>
+					<Grid item xs={5}>
+						<h2 style={{textAlign:"left" , margin:10}}> Stages </h2>
 					</Grid>	
 
 					<Grid item xs>
@@ -323,11 +617,7 @@ constructor(props) {
 					</Grid>
 
 
-				</Grid>
-				
-
-
-
+				</Grid>				
 			<Grid item xs={3}>
 
 			</Grid>	
@@ -344,6 +634,7 @@ constructor(props) {
                     						{(provided, snapshot) => (
                    									<div > 	
                       									<ListItem
+																					
                         									ContainerComponent="li"
                         									ContainerProps={{ ref: provided.innerRef }}
                         									{...provided.draggableProps}
@@ -356,7 +647,7 @@ constructor(props) {
 																						
                       									>
                         									<ListItemIcon>
-                          											<EmailIcon />
+                          											<TuneIcon />
                         									</ListItemIcon>
 
                        		 								<ListItemText
@@ -365,10 +656,11 @@ constructor(props) {
                         									/>
 
                         									<ListItemSecondaryAction>
-                          											<IconButton onClick={alert("hello")}>
+                          											<IconButton onClick={() => this.openUpdateStage(item)}>
                             											<EditIcon  edge="start"/>
                           											</IconButton>
                         									</ListItemSecondaryAction>
+																					
                       									</ListItem>
                       								</div>
                     						)}
@@ -388,7 +680,7 @@ constructor(props) {
 
 			<Paper className={useStyles.root}>																			
 			<Grid item xs={12}>
-				<h3 style={{textAlign:"left" , margin:10}}> Consumer requests </h3>
+				<h2 style={{textAlign:"left" , margin:10}}> Consumer requests </h2>
 			</Grid>
 
 
@@ -401,28 +693,7 @@ constructor(props) {
 			</Grid>	
 
 			<Grid item xs={9}>
-				<Table className={useStyles.table} width="auto"> 
-          			<TableHead>
-            				<TableRow>
-              						<TableCell>Date time</TableCell>
-              						<TableCell align="right">Name</TableCell>
-              						<TableCell align="right">Details</TableCell>
-              						<TableCell align="right">Funnel</TableCell>
-           					 </TableRow>
-         			</TableHead>
-          			<TableBody>
-            					{this.rows.map(row => (
-              							<TableRow key={row.dateTime}>
-                							<TableCell component="th" scope="row">
-                  								{row.dateTime}
-                							</TableCell>
-                							<TableCell align="right">{row.name}</TableCell>
-                							<TableCell align="right">{row.details}</TableCell>
-                							<TableCell align="right">{row.funnel}</TableCell>
-              							</TableRow>
-            					))}
-          			</TableBody>
-        		</Table>
+				{/* consumer request table */}
 			</Grid>	
 
 			<Grid item xs={2}>
@@ -431,96 +702,157 @@ constructor(props) {
 		</Paper>										
 
 			<Dialog open={this.state.createStateDialog} onClose={this.handleDialogClose} aria-labelledby="form-dialog-title">
-        			 <DialogTitle id="form-dialog-title">Add new stage </DialogTitle>
+        			 
+						<Grid item xs={8}>
+								<DialogTitle id="form-dialog-title">{this.state.editStageBoxTitle}
+									
+								 </DialogTitle>						
+						</Grid>
+							 
         				<DialogContent>
-          					<DialogContentText>
+          					{/* <DialogContentText>
             						Here you can add new stage to work flow
-          					</DialogContentText>
-          					
+          					</DialogContentText> */}
+          	
  						<form className={useStyles.createFlowContainer} noValidate autoComplete="off"
  							onSubmit={this.handleSubmit}
  						>	
-          					<TextField
-        							id="stage_name"
-        							label="Name"
-        							className={useStyles.textField}
-        							placeholder="Enter work flow name"
-        							margin="normal"
-        							variant="outlined"
-        							name="name"
-        							value={this.state.currentStage.name}
-        							onChange={this.handleInputChange}
-        							required
-      						/>
-      						
-      						 <TextField
-        						id="stage_discription"
-        						label="Discription"
-        						multiline
-        						rows="4"
-        						placeholder="Enter work flow Discription"
-        						className={useStyles.textField}
-        						margin="normal"
-        						variant="outlined"
-        						name="description"
-        						value={this.state.currentStage.description}
-        						onChange={this.handleInputChange}
-        						required
-     						 />
-     						 
-     						 <FormControl >
-        						<InputLabel htmlFor="stage-type">Type</InputLabel>
-        								<Select
-          									native          					
-          									name="type" 
-          									value={this.state.currentStage.type} 
-          									onChange={this.handleInputChange}
-          									
-        								>
-         									 <option value="" />
-         									 <option value={'SendSmsJob'}>Send SMS</option>
-         									 <option value={'SendemailJob'}>Send Email</option>
-          									<option value={'SendWhatsappTemplateJob'}>Send whatsapp template</option>
-          									<option value={'WaitJob'}>Wait job</option>
-       									</Select>
-     						 </FormControl>
+          						<Grid container spacing={2}>
+													<Grid item xs={6}>
+														<div className="form-group">
+															<TextField
+        														id="stage_name"
+        														label="Name"
+        														className={useStyles.textField}
+        														placeholder="Enter work flow name"
+        														margin="normal"
+        														variant="outlined"
+        														name="name"
+        														value={this.state.currentStage.name}
+        														onChange={this.handleInputChange}
+        														required
+      												/>
+															{this.validator.message('name',this.state.currentStage.name, 'required')}
+															</div>
+													</Grid>	
+													
+													<Grid item xs={6}>
+													<div className="form-group">
+															<FormControl >
+        												<InputLabel htmlFor="stage-type">Type</InputLabel>
+        														<Select
+          															native          					
+          															name="type" 
+          															value={this.state.currentStage.type} 
+          															onChange={this.handleInputChange}          									
+        														>
+         									 							<option value="" />
+         									 							<option value={'SendSmsJob'}>Send SMS</option>
+         									 							<option value={'SendEmailJob'}>Send Email</option>
+          								 							<option value={'SendWhatsappTemplateJob'}>Send whatsapp template</option>
+          								 							<option value={'WaitJob'}>Wait job</option>
+       															</Select>
+     						 							</FormControl>
+																{this.validator.message('type',this.state.currentStage.name, 'required')}		
+																</div>
+													</Grid>
 
-     						 <TextField
-        						id="stage_template"
-        						label="Template"
-        						multiline
-        						rows="4"
-        						placeholder="Enter template"
-        						className={useStyles.textField}
-        						margin="normal"
-        						variant="outlined"
-        						name="template"
-        						value={this.state.currentStage.template}
-        						onChange={this.handleInputChange}
-        						required
-     						 />
+													<Grid item xs={12}>
+													<div>	
+															<TextField
+        														id="stage_discription"
+        														label="Description"
+        														
+        														placeholder="Enter work flow Discription"
+        														fullWidth
+        														margin="normal"
+        														variant="outlined"
+        														name="description"
+        														value={this.state.currentStage.description}
+        														onChange={this.handleInputChange}
+        														required
+     						 							/>	
+																{this.validator.message('description',this.state.currentStage.name, 'required')}
+														</div>		
+													</Grid>
+														
 
+													<Grid item xs={6}>
+															<TextField
+        															id="stage_template"
+        															label="Template"
+        															multiline
+        															rows="4"
+        															placeholder="Enter template"
+        															className={useStyles.textField}
+        															margin="normal"
+        															variant="outlined"
+        															name="template"
+        															value={this.state.currentStage.template}
+        															onChange={this.handleInputChange}
+																			required
+																			disabled={ this.state.editStageDisableTemplate? true : false}
+     						 							/>
+													</Grid>
+											</Grid>
+											<DialogActions>
+														<Button variant="outlined"  onClick={this.handleDialogClose} color="secondary"										 						
+										 				>
+            									Delete
+         				    				</Button>
+          									<Button variant="outlined" onClick={this.handleDialogClose} color="default">
+            									Cancel
+          									</Button >          		
+          									<Button variant="outlined"  onClick={this.saveStage} color="primary">
+            									Save
+         				    				</Button>         				           				  
+     									</DialogActions>
+											 </form>	
+										
+										
      					<MaterialTable
                               title="Exit actions"
                               columns={this.state.exitActionColumns}
-                              data={this.state.exitActions}
+															data={this.state.exitActions}
+															options={{
+																actionsColumnIndex: -1,
+																search: false,
+																paging: false
+																}}
                               editable={{
                                 onRowAdd: newData =>
                                   new Promise(resolve => {
                                     setTimeout(() => {
-                                      resolve();
+																			resolve();
+																			
+																			if(!newData.result || !newData.action_type){
+																				alert("Please enter exit action details")
+																					return
+																			}
+																			
+newData.action_type ==='success_exit' ? newData["action_flow"] = 'success' : newData.action_type == 'failed_exit' ? newData["action_flow"] = 'failed' : console.log("Done")
+																			 
+																			
+																			
                                       const exitActions = [...this.state.exitActions];
                                       exitActions.push(newData);
-                                      this.setState({ ...this.state, exitActions });
+																			this.setState({ ...this.state, exitActions });
+																			this.addExitAction(this.state.currentStage,newData)
                                     }, 600);
                                   }),
                               onRowUpdate: (newData, oldData) =>
                                 new Promise(resolve => {
                                   setTimeout(() => {
-                                    resolve();
+																		resolve();
+																		if(!newData.result || !newData.action_type){
+																			alert("Please enter exit action details")
+																				return
+																		}
+																		newData.action_type ==='success_exit' ? newData["action_flow"] = 'success' : newData.action_type == 'failed_exit' ? newData["action_flow"] = 'failed' : console.log("Done")																		
                                     const exitActions = [...this.state.exitActions];
              					    exitActions[exitActions.indexOf(oldData)] = newData;
-                                    this.setState({ ...this.state, exitActions });
+																		this.setState({ ...this.state, exitActions });
+																		this.updateExitaction(newData)
                                   }, 600);
                                 }),
                               onRowDelete: oldData =>
@@ -529,31 +861,14 @@ constructor(props) {
                                     resolve();
                                     const exitActions = [...this.state.exitActions];
                                     exitActions.splice(exitActions.indexOf(oldData), 1);
-                                    this.setState({ ...this.state, exitActions });
+																		this.setState({ ...this.state, exitActions });
+																		this.deleteExitAction(oldData)
                                   }, 600);
                                 }),
                             }}
                         />	 
-
-      					</form>	
-        				</DialogContent>
-        				
-        				<DialogActions>
-          					<Button onClick={this.handleDialogClose} color="primary">
-            						Cancel
-          					</Button >
-          					
-          					<Button type="submit" onClick={this.saveStage} color="primary">
-            					Save
-         				    </Button>
-
-         				    <Button type="submit" onClick={this.handleDialogClose} color="primary">
-            					Delete
-         				    </Button>
-         				  
-     					</DialogActions>
+        				</DialogContent>        				        			
      			 </Dialog>	
-
 
 		</>	
       )

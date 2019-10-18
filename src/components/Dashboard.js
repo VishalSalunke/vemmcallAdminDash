@@ -143,7 +143,7 @@ const useStyles = makeStyles(theme => ({
         <Divider />
           <List>
                  <Link to='/'> 
-                    <ListItem button>
+                    <ListItem button onClick={handleDrawerClose}>
                         
                           <ListItemIcon>{ <HomeIcon />}</ListItemIcon>
                           <ListItemText primary="Home"/>
@@ -152,7 +152,7 @@ const useStyles = makeStyles(theme => ({
                  </Link> 
 
                  <Link to='/work-flows'>
-                      <ListItem button>
+                      <ListItem button onClick={handleDrawerClose}>
                           <ListItemIcon>{ <AccountTreeIcon />}</ListItemIcon>
                           <ListItemText primary="Work Flow"/>
                       </ListItem>    

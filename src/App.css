@@ -21,6 +21,13 @@
   color: #09d3ac;
 }
 
-h1 { color: #c9d0d4; font-family: 'Helvetica Neue', sans-serif; font-size: 46px; font-weight: 100; line-height: 50px; letter-spacing: 1px; padding: 0 0 40px; border-bottom: double #555; }
+h1 { color: #c9d0d4; font-family: 'Helvetica Neue', sans-serif; font-size: 41px;
+     font-weight: 100; line-height: 25px; letter-spacing: 1px; padding: 0 0 15px;
+     border-bottom: double #555; }
 
+h2 { font-family: Verdana, Arial, Helvetica, sans-serif;
+     font-size: 180%; color:#555; font-weight: bold; }
 
+.srv-validation-message{
+      color: #e64040;
+}

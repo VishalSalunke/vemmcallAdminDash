@@ -1,6 +1,6 @@
 import React , { Component } from 'react'
 import { BrowserRouter as Router } from 'react-router-dom'
-
+import SimpleReactValidator from 'simple-react-validator';
 import axios from 'axios'
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -45,13 +45,12 @@ const useStyles = makeStyles(theme => ({
  		constructor(props){
 
  			super(props)
- 			
+ 			this.validator = new SimpleReactValidator();
  			this.state = {
 	
 			workFlowListColumns: [
      					 { title: 'Name', field: 'name' },
-      					 { title: 'Discription', field: 'description' },
-     											
+						 { title: 'Description', field: 'description' },						        											
     				],
 
     		workFlowListData: [ ],
@@ -97,8 +96,8 @@ const useStyles = makeStyles(theme => ({
  		fetchAllWorkFlow = () => {
  				axios.get('http://localhost:3000/react_api/v1/admin/flows/flows',{
  				headers : {
- 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
- 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
  					'uid' : 'vsalunke@quinstreet.com'
 
  				},
@@ -126,7 +125,12 @@ const useStyles = makeStyles(theme => ({
   		}
 
   	createWorkFlow = () => {
-  
+		if (!this.validator.allValid()) {
+					
+			this.validator.showMessages();
+			this.forceUpdate();
+			return
+		}
 
     		axios.post('http://localhost:3000/react_api/v1/admin/flows/create_flow',
 
@@ -138,8 +142,8 @@ const useStyles = makeStyles(theme => ({
 
     		{
  				headers : {
- 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
- 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
  					'uid' : 'vsalunke@quinstreet.com'
  				}
  			}	
@@ -180,8 +184,8 @@ const useStyles = makeStyles(theme => ({
 
     		{
  				headers : {
- 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
- 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
  					'uid' : 'vsalunke@quinstreet.com'
  				}
  			}	
@@ -208,8 +212,8 @@ const useStyles = makeStyles(theme => ({
 
     		{
  				headers : {
- 					'access-token' : 'M1fCUjQHAGMO1x_CqV1Kuw',
- 					'client' : 'CPCFC0DUyVOgbpvRV91hLQ',
+ 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
+ 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
  					'uid' : 'vsalunke@quinstreet.com'
  				}
  			},
@@ -266,14 +270,9 @@ const useStyles = makeStyles(theme => ({
         						<MaterialTable
      								 title="Work flows"
      								 columns={this.state.workFlowListColumns}
-      								 data={this.state.workFlowListData}
-      								  actions={[
-          										{
-           										 icon: 'link',
-           										 tooltip: 'Go to flow',
-          										 onClick: (event, rowData) => this.props.history.push(`/work-flows/${rowData.id}`,{ newFlowData : rowData})
-          										}
-        									  ]}
+									 data={this.state.workFlowListData}
+									 onRowClick={(event, rowData) => this.props.history.push(`/work-flows/${rowData.id}`,{ newFlowData : rowData})}
+								
 									options={{
 												  actionsColumnIndex: -1,
 												  addRow: false
@@ -323,13 +322,8 @@ const useStyles = makeStyles(theme => ({
 				 <Dialog open={this.state.CreateFlowDialoge} onClose={this.handleDialogClose} aria-labelledby="form-dialog-title">
         			 <DialogTitle id="form-dialog-title">Create new work flow</DialogTitle>
         				<DialogContent>
-          					<DialogContentText>
-            						Here you can create new work flow
-          					</DialogContentText>
-          					
- 						<form className={useStyles.createFlowContainer} noValidate autoComplete="off"
- 							onSubmit={this.handleSubmit}
- 						>
+
+						 <div>
           					<TextField
         							name="wokFlowName"
         							label="Name"
@@ -341,13 +335,16 @@ const useStyles = makeStyles(theme => ({
         							onChange={ this.handleChange }
         							required
       						/>
+							  {this.validator.message('wokFlowName',this.state.wokFlowName, 'required')}
+						 </div>
       						<br/>
+							<div>
       						 <TextField
         						name="WorkFlowDescription"
-        						label="Discription"
+        						label="Description"
         						multiline
         						rows="4"
-        						placeholder="Enter work flow Discription"
+        						placeholder="Enter work flow Description"
         						className={useStyles.textField}
         						margin="normal"
         						variant="outlined"
@@ -355,8 +352,9 @@ const useStyles = makeStyles(theme => ({
         						onChange={ this.handleChange }
         						required
      						 />
-
-      					</form>	
+								{this.validator.message('WorkFlowDescription',this.state.WorkFlowDescription, 'required')}
+							</div>  	
+      				
         				</DialogContent>
         				
         				<DialogActions>
