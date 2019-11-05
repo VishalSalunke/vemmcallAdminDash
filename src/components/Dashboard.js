@@ -12,6 +12,7 @@ import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import HomeIcon from '@material-ui/icons/Home';
+import OutdoorGrillIcon from '@material-ui/icons/OutdoorGrill';
 import AccountTreeIcon from '@material-ui/icons/AccountTree';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ListItem from '@material-ui/core/ListItem';
@@ -25,7 +26,8 @@ import { BrowserRouter as Router , Link , Route , Switch } from 'react-router-do
 import WorkFlow from './WorkFlow'
 import  ManageWorkflow  from './ManageWorkflow'
 import  Home  from './Home'
-
+import Experiment from './Experiment'
+import DisplayExperiment from './DisplayExperiment'
 
 const drawerWidth = 240;
 
@@ -157,6 +159,15 @@ const useStyles = makeStyles(theme => ({
                           <ListItemText primary="Work Flow"/>
                       </ListItem>    
                  </Link> 
+
+                 <Link to='/experiments'> 
+                    <ListItem button onClick={handleDrawerClose}>
+                        
+                          <ListItemIcon>{ <OutdoorGrillIcon />}</ListItemIcon>
+                          <ListItemText primary="Experiment"/>
+                                              
+                    </ListItem>
+                 </Link>
                
                
                  
@@ -169,12 +180,15 @@ const useStyles = makeStyles(theme => ({
         })}
       >
       <div className={classes.drawerHeader} />
-            
+      
             <Switch>
             <Route exact path='/' component={Home} />
             <Route exact path='/work-flows' component={WorkFlow} />
             <Route exact  path='/work-flows/:workflowID' component={ManageWorkflow} />
+            <Route exact path='/experiments' component={Experiment} />
+            <Route exact  path='/experiments/:experimentId' component={DisplayExperiment} />
           </Switch>
+          
       
 
         

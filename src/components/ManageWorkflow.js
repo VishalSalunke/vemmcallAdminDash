@@ -20,13 +20,19 @@ import RootRef from "@material-ui/core/RootRef";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import EditIcon from "@material-ui/icons/Edit";
 import TuneIcon from "@material-ui/icons/Tune";
+import EmailIcon from "@material-ui/icons/Email";
+import TextsmsIcon from "@material-ui/icons/Textsms";
+import ForumIcon from "@material-ui/icons/Forum";
+import TimerIcon from "@material-ui/icons/Timer";
+
+
 // import DeleteIcon from '@material-ui/icons/Delete';
 
 
 import { makeStyles } from '@material-ui/core/styles';
 
 import { Dialog , DialogTitle , DialogContent  , DialogActions , TextField ,
-		InputLabel , FormControl , MenuItem , FormHelperText
+		InputLabel , FormControl 
 	   }   from '@material-ui/core'
 
 const useStyles = makeStyles(theme => ({
@@ -120,20 +126,25 @@ constructor(props) {
 				exitActionActionFlowColumnDisable : 'always',	
 				editStageDisableTemplate : false, 
         currentStage : {
-						id : undefined,
+						id : '',
 						name : '',
 						description : '',
 						type : '',
 						template : '',
 						exit_actions : [],
-						action_type: ''
+						action_type: '',
+						waitTime_days:0,
+						waitTime_hours:0,
+						waitTime_minutes:0
+						
 				},
 				jobTypes : {
 					SendSmsJob : 'Send SMS',
 					SendEmailJob : 'Send Email',
-					SendWhatsappTemplateJob : 'Send whatsapp template',
+					SendWhatsappJob : 'Send whatsapp ',
 					WaitJob : 'Wait job'
 				},
+			
 				editStageBoxTitle : '' 	
 
     };
@@ -172,7 +183,7 @@ constructor(props) {
       });
 		}
 		updateStageOrders = async (stage_order_hash) =>{
-			let id = this.state.currentStage.id;
+			//let id = this.state.currentStage.id;
 			
 			let res = await axios.put(`http://localhost:3000/react_api/v1/admin/stages/update_order`,
     												{
@@ -181,9 +192,9 @@ constructor(props) {
     												},
     												{
  																headers : {
- 																				'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
- 																				'client' : '6fEfnZkXV5ewZzycrVyRJg',
- 																				'uid' : 'vsalunke@quinstreet.com'
+																	'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+																	'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+																	'uid' : 'vsalunke@quinstreet.com'
  																			}
  														}	
 											 )
@@ -202,7 +213,7 @@ constructor(props) {
 											value={props.value}
 											onChange={e => {
 																	props.onChange(e.target.value)
-																	e.target.value!== 'go_to_flow' ? this.state.exitActionActionFlowColumnDisable = 'never' : this.state.exitActionActionFlowColumnDisable = 'always'
+																	e.target.value!== 'go_to_flow' ? this.setState({exitActionActionFlowColumnDisable : 'never'}) : this.setState({exitActionActionFlowColumnDisable : 'always'})
 																	//alert("hi")
 															 }
 											}								
@@ -275,28 +286,38 @@ constructor(props) {
   	 };
 
 		createStageAPI = () =>{
-				 
+			let waitJobTime ={}
+			let otherParams = {}
+			if(this.state.currentStage.type==='waitTimeJob'){
+				waitJobTime['days'] = this.state.currentStage.waitTime_days
+				waitJobTime['hours'] = this.state.currentStage.waitTime_hours
+				waitJobTime['minutes'] = this.state.currentStage.waitTime_minutes
+				otherParams['waitJobTime'] = waitJobTime
+			}
+			
+
 			axios.post('http://localhost:3000/react_api/v1/admin/stages/create_stage',
 
 			{	
+				
 				flow_id: this.state.flowID.toString(),
 				name: this.state.currentStage.name,
 				description: this.state.currentStage.description,
 				class_name: this.state.currentStage.type,
-				params:{ }.toString(),
+				params: otherParams.toString(),
 				order: ((this.state.stages.length + 1)*10).toString()
 			},{
 				headers : {
-				 'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
-				 'client' : '6fEfnZkXV5ewZzycrVyRJg',
-				 'uid' : 'vsalunke@quinstreet.com'
+					'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+					'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+					'uid' : 'vsalunke@quinstreet.com'
 			 }
 			})
 			.then(response => {
 				console.log(response);
-				this.setState({
-					stages : [...this.state.stages,response.data.stage]
-				})
+				// this.setState({
+				// 	stages : [...this.state.stages,response.data.stage]
+				// })
 						
 		})
 		.catch(error => {
@@ -317,9 +338,9 @@ constructor(props) {
     												},
     												{
  																headers : {
- 																				'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
- 																				'client' : '6fEfnZkXV5ewZzycrVyRJg',
- 																				'uid' : 'vsalunke@quinstreet.com'
+																	'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+																	'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+																	'uid' : 'vsalunke@quinstreet.com'
  																			}
  														}	
 											 )
@@ -360,9 +381,9 @@ constructor(props) {
   		   axios.get(`http://localhost:3000/react_api/v1/admin/flows/${flowId}`,
     		{
  				headers : {
- 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
- 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
- 					'uid' : 'vsalunke@quinstreet.com'
+					'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+					'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+					'uid' : 'vsalunke@quinstreet.com'
  				}
  			}	
 	
@@ -402,8 +423,8 @@ constructor(props) {
 
 			{
 			 headers : {
-				 'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
-				 'client' : '6fEfnZkXV5ewZzycrVyRJg',
+				'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+				 'client' : 'SK9dW5VauJg2XH2jBTFp1w',
 				 'uid' : 'vsalunke@quinstreet.com'
 			 }
 		 }	
@@ -424,9 +445,9 @@ constructor(props) {
 			axios.delete(`http://localhost:3000/react_api/v1/admin/exit_actions/${id}`,
 			{
 			 headers : {
-				 'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
-				 'client' : '6fEfnZkXV5ewZzycrVyRJg',
-				 'uid' : 'vsalunke@quinstreet.com'
+				'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+				'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+				'uid' : 'vsalunke@quinstreet.com'
 			 }
 		 }	
 
@@ -457,9 +478,9 @@ constructor(props) {
 
     		{
  				headers : {
- 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
- 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
- 					'uid' : 'vsalunke@quinstreet.com'
+					'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+					'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+					'uid' : 'vsalunke@quinstreet.com'
  				}
  			}	
 	
@@ -504,9 +525,9 @@ constructor(props) {
 			let id = stage.id
 			axios.get(`http://localhost:3000/react_api/v1/admin/stages/${id}`,{
  				headers : {
- 					'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
- 					'client' : '6fEfnZkXV5ewZzycrVyRJg',
- 					'uid' : 'vsalunke@quinstreet.com'
+					'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+					'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+					'uid' : 'vsalunke@quinstreet.com'
 
  				}
  			})
@@ -545,9 +566,9 @@ constructor(props) {
 		 fetchAllWorkFlow = () => {
 			axios.get('http://localhost:3000/react_api/v1/admin/flows/flows',{
 			headers : {
-				'access-token' : 'qdCnY8YMAvR8KcFZjGC1oQ',
-				'client' : '6fEfnZkXV5ewZzycrVyRJg',
-				'uid' : 'vsalunke@quinstreet.com'
+				'access-token' : 'SPxukvxCwGULVdfyDE2daQ',
+				 'client' : 'SK9dW5VauJg2XH2jBTFp1w',
+				 'uid' : 'vsalunke@quinstreet.com'
 
 			},
 			crossDomain: true
@@ -647,7 +668,18 @@ constructor(props) {
 																						
                       									>
                         									<ListItemIcon>
-                          											<TuneIcon />
+																					
+																						{(() => {
+        																					switch (item.class_name) {
+																													case "SendEmailJob":   return <EmailIcon/>;
+																													case "SendSmsJob":   return <TextsmsIcon/>;
+																													case "SendWhatsappJob":   return <ForumIcon/>;    
+																													case "WaitJob":   return <TimerIcon/>;       																								
+          																								default:      return <TuneIcon/>;
+        																					}
+																							})()
+																						}
+                          											
                         									</ListItemIcon>
 
                        		 								<ListItemText
@@ -749,7 +781,7 @@ constructor(props) {
          									 							<option value="" />
          									 							<option value={'SendSmsJob'}>Send SMS</option>
          									 							<option value={'SendEmailJob'}>Send Email</option>
-          								 							<option value={'SendWhatsappTemplateJob'}>Send whatsapp template</option>
+          								 							<option value={'SendWhatsappJob'}>Send whatsapp </option>
           								 							<option value={'WaitJob'}>Wait job</option>
        															</Select>
      						 							</FormControl>
@@ -777,7 +809,7 @@ constructor(props) {
 													</Grid>
 														
 
-													<Grid item xs={6}>
+													<Grid item xs={4}>
 															<TextField
         															id="stage_template"
         															label="Template"
@@ -794,6 +826,62 @@ constructor(props) {
 																			disabled={ this.state.editStageDisableTemplate? true : false}
      						 							/>
 													</Grid>
+													
+													
+													<Grid item xs={2}>
+															Wait
+														 <TextField
+															id="standard-number"
+															name="waitTime_days"
+															value={this.state.currentStage.waitTime_days}
+          										label="Days"
+          										type="number"
+          										className={useStyles.textField}
+          										InputLabelProps={{
+            											shrink: true,
+															}}
+															onChange={this.handleInputChange}
+															margin="normal"
+															disabled={ this.state.editStageDisableTemplate? false : true}
+        										 />
+													</Grid>	 
+
+													<Grid item xs={2}>
+													Job
+														 <TextField
+          										id="hours"
+															label="hours"
+															name="waitTime_hours"
+															value={this.state.currentStage.waitTime_hours}
+          										type="number"
+          										className={useStyles.textField}
+          										InputLabelProps={{
+            											shrink: true,
+          										}}
+															margin="normal"
+															onChange={this.handleInputChange}
+															disabled={ this.state.editStageDisableTemplate? false : true}
+        										 />
+													</Grid>
+
+													<Grid item xs={2}>
+													Time
+														 <TextField
+          										id="minutes"
+															label="minutes"
+															name="waitTime_minutes"
+															value={this.state.currentStage.waitTime_minutes}
+          										type="number"
+          										className={useStyles.textField}
+          										InputLabelProps={{
+            											shrink: true,
+          										}}
+															margin="normal"
+															onChange={this.handleInputChange}
+															disabled={ this.state.editStageDisableTemplate? false : true}
+        										 />
+													</Grid>
+	
 											</Grid>
 											<DialogActions>
 														<Button variant="outlined"  onClick={this.handleDialogClose} color="secondary"										 						
@@ -830,7 +918,7 @@ constructor(props) {
 																					return
 																			}
 																			
-newData.action_type ==='success_exit' ? newData["action_flow"] = 'success' : newData.action_type == 'failed_exit' ? newData["action_flow"] = 'failed' : console.log("Done")
+newData.action_type ==='success_exit' ? newData["action_flow"] = 'success' : newData.action_type === 'failed_exit' ? newData["action_flow"] = 'failed' : console.log("Done")
 																			 
 																			
 																			
@@ -848,7 +936,7 @@ newData.action_type ==='success_exit' ? newData["action_flow"] = 'success' : new
 																			alert("Please enter exit action details")
 																				return
 																		}
-																		newData.action_type ==='success_exit' ? newData["action_flow"] = 'success' : newData.action_type == 'failed_exit' ? newData["action_flow"] = 'failed' : console.log("Done")																		
+																		newData.action_type ==='success_exit' ? newData["action_flow"] = 'success' : newData.action_type === 'failed_exit' ? newData["action_flow"] = 'failed' : console.log("Done")																		
                                     const exitActions = [...this.state.exitActions];
              					    exitActions[exitActions.indexOf(oldData)] = newData;
 																		this.setState({ ...this.state, exitActions });
